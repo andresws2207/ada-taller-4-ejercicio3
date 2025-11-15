@@ -1,0 +1,36 @@
+# Binarios de Go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Archivos de test
+*.test
+*.out
+
+# Archivos de cobertura
+*.coverprofile
+coverage.html
+
+# Dependencias de Go
+vendor/
+go.work
+
+# Archivos del IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.iml
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Archivos temporales
+*.tmp
+*.bak
+*.log
