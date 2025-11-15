@@ -328,21 +328,6 @@ El programa genera:
 
 ---
 
-## Entrega
-
-**Formato de Entrega:**
-- ✅ Código fuente en Go (`main.go`)
-- ✅ Archivo de módulo (`go.mod`)
-- ✅ README con documentación completa
-- ✅ Dataset de prueba (`power-US-Grid.mtx`)
-- ✅ Casos de prueba incluidos y verificados
-
-**Repositorio:** GitHub privado compartido con el profesor
-
-**Fecha límite:** [Por definir]
-
----
-
 ## Referencias
 
 - Dataset: [UF Sparse Matrix Collection - US Power Grid](http://www.cise.ufl.edu/research/sparse/matrices/Pajek/USpowerGrid)
