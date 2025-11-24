@@ -11,161 +11,161 @@ import (
 	"time"
 )
 
-// Edge representa una conexión entre dos edificios/nodos
-type Edge struct {
-	from int
-	to   int
-	cost float64
+// Arista representa una conexión entre dos edificios/nodos
+type Arista struct {
+	desde int
+	hacia int
+	costo float64
 }
 
-// PriorityQueue implementa heap.Interface para Prim's algorithm
-type PriorityQueue []Edge
+// ColaPrioridad implementa heap.Interface para el algoritmo de Prim
+type ColaPrioridad []Arista
 
-func (pq PriorityQueue) Len() int           { return len(pq) }
-func (pq PriorityQueue) Less(i, j int) bool { return pq[i].cost < pq[j].cost }
-func (pq PriorityQueue) Swap(i, j int)      { pq[i], pq[j] = pq[j], pq[i] }
+func (cp ColaPrioridad) Len() int           { return len(cp) }
+func (cp ColaPrioridad) Less(i, j int) bool { return cp[i].costo < cp[j].costo }
+func (cp ColaPrioridad) Swap(i, j int)      { cp[i], cp[j] = cp[j], cp[i] }
 
-func (pq *PriorityQueue) Push(x interface{}) {
-	*pq = append(*pq, x.(Edge))
+func (cp *ColaPrioridad) Push(x interface{}) {
+	*cp = append(*cp, x.(Arista))
 }
 
-func (pq *PriorityQueue) Pop() interface{} {
-	old := *pq
-	n := len(old)
-	item := old[n-1]
-	*pq = old[0 : n-1]
-	return item
+func (cp *ColaPrioridad) Pop() interface{} {
+	viejo := *cp
+	n := len(viejo)
+	elem := viejo[n-1]
+	*cp = viejo[0 : n-1]
+	return elem
 }
 
-// UnionFind estructura para optimización
-type UnionFind struct {
-	parent []int
-	rank   []int
+// EncontUnion estructura para optimización
+type EncontUnion struct {
+	padre []int
+	rango []int
 }
 
-// NewUnionFind crea una nueva estructura Union-Find
-func NewUnionFind(n int) *UnionFind {
-	uf := &UnionFind{
-		parent: make([]int, n),
-		rank:   make([]int, n),
+// NuevoEncontUnion crea una nueva estructura Union-Find
+func NuevoEncontUnion(n int) *EncontUnion {
+	eu := &EncontUnion{
+		padre: make([]int, n),
+		rango: make([]int, n),
 	}
 	for i := 0; i < n; i++ {
-		uf.parent[i] = i
-		uf.rank[i] = 0
+		eu.padre[i] = i
+		eu.rango[i] = 0
 	}
-	return uf
+	return eu
 }
 
-// Find encuentra el representante del conjunto con compresión de camino
-func (uf *UnionFind) Find(x int) int {
-	if uf.parent[x] != x {
-		uf.parent[x] = uf.Find(uf.parent[x]) // Compresión de camino
+// Encontrar encuentra el representante del conjunto con compresión de camino
+func (eu *EncontUnion) Encontrar(x int) int {
+	if eu.padre[x] != x {
+		eu.padre[x] = eu.Encontrar(eu.padre[x]) // Compresión de camino
 	}
-	return uf.parent[x]
+	return eu.padre[x]
 }
 
-// Union une dos conjuntos usando unión por rango
-func (uf *UnionFind) Union(x, y int) bool {
-	rootX := uf.Find(x)
-	rootY := uf.Find(y)
+// Unir une dos conjuntos usando unión por rango
+func (eu *EncontUnion) Unir(x, y int) bool {
+	raizX := eu.Encontrar(x)
+	raizY := eu.Encontrar(y)
 
-	if rootX == rootY {
+	if raizX == raizY {
 		return false // Ya están en el mismo conjunto
 	}
 
 	// Unión por rango
-	if uf.rank[rootX] < uf.rank[rootY] {
-		uf.parent[rootX] = rootY
-	} else if uf.rank[rootX] > uf.rank[rootY] {
-		uf.parent[rootY] = rootX
+	if eu.rango[raizX] < eu.rango[raizY] {
+		eu.padre[raizX] = raizY
+	} else if eu.rango[raizX] > eu.rango[raizY] {
+		eu.padre[raizY] = raizX
 	} else {
-		uf.parent[rootY] = rootX
-		uf.rank[rootX]++
+		eu.padre[raizY] = raizX
+		eu.rango[raizX]++
 	}
 	return true
 }
 
-// Graph representa el grafo de edificios
-type Graph struct {
+// Grafo representa el grafo de edificios
+type Grafo struct {
 	vertices int
-	edges    []Edge
-	adjList  map[int][]Edge
+	aristas  []Arista
+	listaAdy map[int][]Arista
 }
 
-// NewGraph crea un nuevo grafo
-func NewGraph(vertices int) *Graph {
-	return &Graph{
+// NuevoGrafo crea un nuevo grafo
+func NuevoGrafo(vertices int) *Grafo {
+	return &Grafo{
 		vertices: vertices,
-		edges:    make([]Edge, 0),
-		adjList:  make(map[int][]Edge),
+		aristas:  make([]Arista, 0),
+		listaAdy: make(map[int][]Arista),
 	}
 }
 
-// AddEdge agrega una arista al grafo
-func (g *Graph) AddEdge(from, to int, cost float64) {
-	edge := Edge{from, to, cost}
-	g.edges = append(g.edges, edge)
-	g.adjList[from] = append(g.adjList[from], edge)
-	g.adjList[to] = append(g.adjList[to], Edge{to, from, cost})
+// AgregarArista agrega una arista al grafo
+func (g *Grafo) AgregarArista(desde, hacia int, costo float64) {
+	arista := Arista{desde, hacia, costo}
+	g.aristas = append(g.aristas, arista)
+	g.listaAdy[desde] = append(g.listaAdy[desde], arista)
+	g.listaAdy[hacia] = append(g.listaAdy[hacia], Arista{hacia, desde, costo})
 }
 
-// PrimMST implementa el algoritmo de Prim para encontrar el MST
-func (g *Graph) PrimMST() ([]Edge, float64) {
+// PrimAEM implementa el algoritmo de Prim para encontrar el Árbol de Expansión Mínimo
+func (g *Grafo) PrimAEM() ([]Arista, float64) {
 	if g.vertices == 0 {
 		return nil, 0
 	}
 
-	mst := make([]Edge, 0)
-	visited := make([]bool, g.vertices)
-	totalCost := 0.0
+	aem := make([]Arista, 0)
+	visitado := make([]bool, g.vertices)
+	costoTotal := 0.0
 
 	// Iniciar desde el nodo 0
-	visited[0] = true
-	pq := &PriorityQueue{}
-	heap.Init(pq)
+	visitado[0] = true
+	cp := &ColaPrioridad{}
+	heap.Init(cp)
 
 	// Agregar todas las aristas del nodo inicial
-	for _, edge := range g.adjList[0] {
-		heap.Push(pq, edge)
+	for _, arista := range g.listaAdy[0] {
+		heap.Push(cp, arista)
 	}
 
 	// Procesar mientras haya aristas y no hayamos visitado todos los nodos
-	for pq.Len() > 0 && len(mst) < g.vertices-1 {
-		edge := heap.Pop(pq).(Edge)
+	for cp.Len() > 0 && len(aem) < g.vertices-1 {
+		arista := heap.Pop(cp).(Arista)
 
 		// Si el destino ya fue visitado, saltar
-		if visited[edge.to] {
+		if visitado[arista.hacia] {
 			continue
 		}
 
-		// Agregar arista al MST
-		mst = append(mst, edge)
-		totalCost += edge.cost
-		visited[edge.to] = true
+		// Agregar arista al AEM
+		aem = append(aem, arista)
+		costoTotal += arista.costo
+		visitado[arista.hacia] = true
 
 		// Agregar todas las aristas del nuevo nodo visitado
-		for _, nextEdge := range g.adjList[edge.to] {
-			if !visited[nextEdge.to] {
-				heap.Push(pq, nextEdge)
+		for _, siguienteArista := range g.listaAdy[arista.hacia] {
+			if !visitado[siguienteArista.hacia] {
+				heap.Push(cp, siguienteArista)
 			}
 		}
 	}
 
-	return mst, totalCost
+	return aem, costoTotal
 }
 
-// CalculateTotalCost calcula el costo total si se conectaran todos contra todos
-func (g *Graph) CalculateTotalCost() float64 {
+// CalcularCostoTotal calcula el costo total si se conectaran todos contra todos
+func (g *Grafo) CalcularCostoTotal() float64 {
 	total := 0.0
-	for _, edge := range g.edges {
-		total += edge.cost
+	for _, arista := range g.aristas {
+		total += arista.costo
 	}
 	return total
 }
 
-// ParseMTXFile lee el archivo .mtx y construye el grafo
-func ParseMTXFile(filename string) (*Graph, error) {
-	file, err := os.Open(filename)
+// LeerArchivoMTX lee el archivo .mtx y construye el grafo
+func LeerArchivoMTX(archivo string) (*Grafo, error) {
+	file, err := os.Open(archivo)
 	if err != nil {
 		return nil, err
 	}
@@ -189,7 +189,7 @@ func ParseMTXFile(filename string) (*Graph, error) {
 		}
 	}
 
-	graph := NewGraph(vertices)
+	grafo := NuevoGrafo(vertices)
 
 	// Semilla para generar costos aleatorios (ya que el grafo es unweighted)
 	rand.Seed(time.Now().UnixNano())
@@ -199,19 +199,19 @@ func ParseMTXFile(filename string) (*Graph, error) {
 		line := scanner.Text()
 		parts := strings.Fields(line)
 		if len(parts) >= 2 {
-			from, _ := strconv.Atoi(parts[0])
-			to, _ := strconv.Atoi(parts[1])
+			desde, _ := strconv.Atoi(parts[0])
+			hacia, _ := strconv.Atoi(parts[1])
 
 			// Convertir a índice 0-based
-			from--
-			to--
+			desde--
+			hacia--
 
 			// Generar un costo aleatorio entre 1 y 100
 			// Para un caso más realista, podríamos usar la distancia euclidiana
 			// pero como no tenemos coordenadas, usamos valores aleatorios
-			cost := rand.Float64()*99 + 1
+			costo := rand.Float64()*99 + 1
 
-			graph.AddEdge(from, to, cost)
+			grafo.AgregarArista(desde, hacia, costo)
 		}
 	}
 
@@ -220,24 +220,24 @@ func ParseMTXFile(filename string) (*Graph, error) {
 	}
 
 	fmt.Printf("Grafo cargado: %d nodos, %d aristas\n", vertices, edges)
-	return graph, nil
+	return grafo, nil
 }
 
-// VerifyMSTWithUnionFind verifica que el MST no tenga ciclos usando Union-Find
-func VerifyMSTWithUnionFind(mst []Edge, vertices int) bool {
-	uf := NewUnionFind(vertices)
+// VerificarAEMConEncontUnion verifica que el AEM no tenga ciclos usando Union-Find
+func VerificarAEMConEncontUnion(aem []Arista, vertices int) bool {
+	eu := NuevoEncontUnion(vertices)
 
-	for _, edge := range mst {
-		if !uf.Union(edge.from, edge.to) {
-			fmt.Printf("¡Ciclo detectado en arista %d-%d!\n", edge.from, edge.to)
+	for _, arista := range aem {
+		if !eu.Unir(arista.desde, arista.hacia) {
+			fmt.Printf("¡Ciclo detectado en arista %d-%d!\n", arista.desde, arista.hacia)
 			return false
 		}
 	}
 
 	// Verificar que todos los nodos estén conectados
-	root := uf.Find(0)
+	raiz := eu.Encontrar(0)
 	for i := 1; i < vertices; i++ {
-		if uf.Find(i) != root {
+		if eu.Encontrar(i) != raiz {
 			fmt.Printf("¡Grafo no conectado! Nodo %d aislado\n", i)
 			return false
 		}
@@ -251,10 +251,10 @@ func main() {
 	fmt.Println()
 
 	// Parsear el archivo
-	filename := "power-US-Grid.mtx"
-	fmt.Printf("Cargando datos desde %s...\n", filename)
+	archivo := "power-US-Grid.mtx"
+	fmt.Printf("Cargando datos desde %s...\n", archivo)
 
-	graph, err := ParseMTXFile(filename)
+	grafo, err := LeerArchivoMTX(archivo)
 	if err != nil {
 		fmt.Printf("Error al leer el archivo: %v\n", err)
 		return
@@ -262,58 +262,58 @@ func main() {
 
 	fmt.Println()
 	fmt.Println("Ejecutando algoritmo de Prim...")
-	start := time.Now()
+	inicio := time.Now()
 
-	mst, minCost := graph.PrimMST()
+	aem, costoMin := grafo.PrimAEM()
 
-	elapsed := time.Since(start)
+	transcurrido := time.Since(inicio)
 
 	fmt.Println()
 	fmt.Println("=== RESULTADOS ===")
-	fmt.Printf("Tiempo de ejecución: %v\n", elapsed)
-	fmt.Printf("Costo total mínimo del MST: %.2f\n", minCost)
-	fmt.Printf("Número de conexiones en MST: %d\n", len(mst))
+	fmt.Printf("Tiempo de ejecución: %v\n", transcurrido)
+	fmt.Printf("Costo total mínimo del AEM: %.2f\n", costoMin)
+	fmt.Printf("Número de conexiones en AEM: %d\n", len(aem))
 	fmt.Println()
 
 	// Calcular costo total de todas las conexiones
-	totalAllEdges := graph.CalculateTotalCost()
-	fmt.Printf("Costo total si se conectaran todos contra todos: %.2f\n", totalAllEdges)
-	fmt.Printf("Ahorro usando MST: %.2f (%.2f%%)\n",
-		totalAllEdges-minCost,
-		(totalAllEdges-minCost)/totalAllEdges*100)
+	totalTodasAristas := grafo.CalcularCostoTotal()
+	fmt.Printf("Costo total si se conectaran todos contra todos: %.2f\n", totalTodasAristas)
+	fmt.Printf("Ahorro usando AEM: %.2f (%.2f%%)\n",
+		totalTodasAristas-costoMin,
+		(totalTodasAristas-costoMin)/totalTodasAristas*100)
 	fmt.Println()
 
-	// Verificar MST con Union-Find
-	fmt.Println("Verificando MST con Union-Find...")
-	if VerifyMSTWithUnionFind(mst, graph.vertices) {
-		fmt.Println("✓ MST válido: sin ciclos y todos los nodos conectados")
+	// Verificar AEM con Union-Find
+	fmt.Println("Verificando AEM con Union-Find...")
+	if VerificarAEMConEncontUnion(aem, grafo.vertices) {
+		fmt.Println("✓ AEM válido: sin ciclos y todos los nodos conectados")
 	} else {
-		fmt.Println("✗ MST inválido")
+		fmt.Println("✗ AEM inválido")
 	}
 	fmt.Println()
 
-	// Mostrar las primeras 20 conexiones del MST
+	// Mostrar las primeras 20 conexiones del AEM
 	fmt.Println("Primeras 20 conexiones a instalar:")
-	for i, edge := range mst {
+	for i, arista := range aem {
 		if i >= 20 {
 			break
 		}
 		fmt.Printf("%3d. Edificio %4d <-> Edificio %4d (Costo: %.2f)\n",
-			i+1, edge.from+1, edge.to+1, edge.cost)
+			i+1, arista.desde+1, arista.hacia+1, arista.costo)
 	}
 
-	if len(mst) > 20 {
-		fmt.Printf("... y %d conexiones más\n", len(mst)-20)
+	if len(aem) > 20 {
+		fmt.Printf("... y %d conexiones más\n", len(aem)-20)
 	}
 
 	fmt.Println()
 	fmt.Println("=== ANÁLISIS DE COMPLEJIDAD ===")
 	fmt.Println("Complejidad temporal: O(E log V)")
-	fmt.Printf("  - E (aristas): %d\n", len(graph.edges))
-	fmt.Printf("  - V (vértices): %d\n", graph.vertices)
+	fmt.Printf("  - E (aristas): %d\n", len(grafo.aristas))
+	fmt.Printf("  - V (vértices): %d\n", grafo.vertices)
 	fmt.Printf("  - E log V ≈ %d * log2(%d) ≈ %.0f operaciones\n",
-		len(graph.edges), graph.vertices,
-		float64(len(graph.edges))*logBase2(float64(graph.vertices)))
+		len(grafo.aristas), grafo.vertices,
+		float64(len(grafo.aristas))*logBase2(float64(grafo.vertices)))
 	fmt.Println()
 	fmt.Println("Union-Find optimizado con:")
 	fmt.Println("  - Compresión de camino: O(α(n)) ≈ O(1) amortizado")
